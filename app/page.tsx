@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://bajeelfizgtptamaamxx.supabase.co";
-const supabaseKey = "sb_publishable_MQg8tf8ghO3nANiUDtzJHg_hStOTKM9";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+``
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Page() {
