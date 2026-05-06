@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
-  const [inspections, setInspections] = useState([]);
+  const [inspections, setInspections] = useState<any[]>([]);
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [customer, setCustomer] = useState("");
