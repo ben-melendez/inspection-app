@@ -9,7 +9,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Page() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [inspections, setInspections] = useState([]);
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
