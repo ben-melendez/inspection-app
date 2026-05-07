@@ -18,6 +18,7 @@ export default function Page() {
   const [photos, setPhotos] = useState<any[]>([]);
   const [view, setView] = useState("list");
   const [selectedInspection, setSelectedInspection] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -91,15 +92,15 @@ export default function Page() {
     setNotes("");
     setPhotos([]);
 
-    loadInspections();
     setView("list");
+    loadInspections();
   };
 
   if (!user) {
     return (
       <div className="p-6 text-center">
-        <h2>Login Required</h2>
-        <button onClick={login} className="bg-blue-500 text-white p-3 mt-4">
+        <h2 className="text-lg font-bold">Login Required</h2>
+        <button onClick={login} className="bg-blue-500 text-white p-3 mt-4 rounded">
           Login
         </button>
       </div>
@@ -110,60 +111,60 @@ export default function Page() {
     <div className="p-3 max-w-md mx-auto space-y-4">
 
       {/* NAV */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2">
         <button
           onClick={() => {
             setView("list");
             setSelectedInspection(null);
           }}
-          className={`p-2 w-1/2 ${view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`p-3 rounded w-1/2 ${view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
           Inspections
         </button>
 
         <button
           onClick={() => setView("form")}
-          className={`p-2 w-1/2 ${view === "form" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+          className={`p-3 rounded w-1/2 ${view === "form" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
-          New Inspection
+          New
         </button>
       </div>
 
       {/* HEADER */}
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg">Inspections</h2>
-        <button onClick={logout}>Logout</button>
+        <button onClick={logout} className="text-sm">Logout</button>
       </div>
 
       {/* FORM */}
       {view === "form" && (
-        <div className="bg-white p-3 rounded-xl space-y-2 shadow">
+        <div className="bg-white p-4 rounded-xl shadow space-y-3">
 
           <input
             placeholder="Customer"
             value={customer}
             onChange={(e) => setCustomer(e.target.value)}
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
           />
 
           <input
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
           />
 
           <input
             placeholder="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
           />
 
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
           >
             <option>Pass</option>
             <option>Fail</option>
@@ -174,7 +175,7 @@ export default function Page() {
             placeholder="Notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full p-2 border"
+            className="w-full p-2 border rounded"
           />
 
           <input
@@ -185,7 +186,7 @@ export default function Page() {
 
           <button
             onClick={handleSave}
-            className="bg-green-500 text-white p-3 w-full"
+            className="bg-green-500 text-white p-3 w-full rounded font-bold"
           >
             Save Inspection
           </button>
@@ -195,7 +196,7 @@ export default function Page() {
 
       {/* DETAIL VIEW */}
       {view === "list" && selectedInspection && (
-        <div className="bg-white p-4 rounded-xl shadow space-y-2">
+        <div className="bg-white p-4 rounded-xl shadow space-y-3">
 
           <button
             onClick={() => setSelectedInspection(null)}
@@ -211,7 +212,12 @@ export default function Page() {
 
           <div className="space-y-2">
             {selectedInspection.photos?.map((p: any, i: number) => (
-              <img key={i} src={p} className="rounded" />
+              <img
+                key={i}
+                src={p}
+                onClick={() => setSelectedPhoto(p)}
+                className="rounded cursor-pointer"
+              />
             ))}
           </div>
 
@@ -248,6 +254,16 @@ export default function Page() {
             </div>
           ))}
 
+        </div>
+      )}
+
+      {/* FULLSCREEN PHOTO */}
+      {selectedPhoto && (
+        <div
+          onClick={() => setSelectedPhoto(null)}
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center"
+        >
+          <img src={selectedPhoto} className="max-h-full max-w-full" />
         </div>
       )}
 
