@@ -172,7 +172,7 @@ export default function Page() {
           <p>{insp.notes}</p>
 
           <div className="grid grid-cols-3 gap-1">
-            {insp.photos?.map((p, i) => (
+            {insp.photos?.map((p: any, i: number) => (
               <img key={i} src={p} className="rounded" />
             ))}
           </div>
