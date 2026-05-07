@@ -15,6 +15,9 @@ export default function Page() {
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState("list");
 
+  const [selectedInspection, setSelectedInspection] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
+
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [customer, setCustomer] = useState("");
@@ -22,9 +25,6 @@ export default function Page() {
   const [status, setStatus] = useState("Pass");
   const [dueDate, setDueDate] = useState("");
   const [photos, setPhotos] = useState<any[]>([]);
-
-  const [selectedInspection, setSelectedInspection] = useState<any>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -60,7 +60,6 @@ export default function Page() {
     for (let file of files) {
       const name = `${Date.now()}-${file.name}`;
       await supabase.storage.from("inspection-photos").upload(name, file);
-
       const { data } = supabase.storage
         .from("inspection-photos")
         .getPublicUrl(name);
@@ -97,27 +96,6 @@ export default function Page() {
     loadInspections();
   };
 
-  // FILTERING + SEARCH
-  const displayed = inspections
-    .filter((i) =>
-      `${i.title} ${i.customer} ${i.location}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
-    .filter((i) => {
-      if (filter === "pass") return i.status === "Pass";
-      if (filter === "fail") return i.status === "Fail";
-      if (filter === "repair") return i.status === "Repair";
-
-      if (filter === "due") {
-        if (!i.due_date) return false;
-        const d = new Date(i.due_date);
-        return d < new Date();
-      }
-
-      return true;
-    });
-
   const getDueStatus = (date: string) => {
     if (!date) return "";
 
@@ -128,8 +106,23 @@ export default function Page() {
     if (diff < 0) return "OVERDUE 🔴";
     if (diff < 14) return "Due Soon ⚠️";
 
-    return "OK";
+    return "";
   };
+
+  const filtered = inspections.filter((i) => {
+    const matchesSearch =
+      `${i.title} ${i.customer} ${i.location}`
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    if (filter === "pass") return matchesSearch && i.status === "Pass";
+    if (filter === "fail") return matchesSearch && i.status === "Fail";
+    if (filter === "repair") return matchesSearch && i.status === "Repair";
+    if (filter === "due")
+      return matchesSearch && getDueStatus(i.due_date).includes("OVERDUE");
+
+    return matchesSearch;
+  });
 
   if (!user) {
     return (
@@ -142,29 +135,36 @@ export default function Page() {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4 max-w-md mx-auto space-y-4">
+    <div className="bg-gray-200 min-h-screen p-4 max-w-md mx-auto space-y-4 text-black">
 
       {/* NAV */}
       <div className="flex gap-2">
-        <button onClick={()=>setView("list")} className={`p-3 w-full rounded ${view==="list"?"bg-blue-600 text-white":"bg-white"}`}>
+        <button
+          onClick={()=>{setView("list");setSelectedInspection(null);}}
+          className={`p-3 w-full rounded ${view==="list"?"bg-blue-600 text-white":"bg-white text-black"}`}
+        >
           Inspections
         </button>
-        <button onClick={()=>setView("form")} className={`p-3 w-full rounded ${view==="form"?"bg-blue-600 text-white":"bg-white"}`}>
+
+        <button
+          onClick={()=>setView("form")}
+          className={`p-3 w-full rounded ${view==="form"?"bg-blue-600 text-white":"bg-white text-black"}`}
+        >
           New
         </button>
       </div>
 
       {/* SEARCH */}
-      {view === "list" && !selectedInspection && (
+      {view==="list" && !selectedInspection && (
         <>
           <input
-            placeholder="Search..."
+            placeholder="Search inspections..."
             value={search}
             onChange={(e)=>setSearch(e.target.value)}
-            className="w-full p-3 border rounded"
+            className="w-full p-3 border border-gray-500 rounded text-black"
           />
 
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 text-sm font-medium">
             <button onClick={()=>setFilter("all")}>All</button>
             <button onClick={()=>setFilter("pass")}>Pass</button>
             <button onClick={()=>setFilter("fail")}>Fail</button>
@@ -175,32 +175,45 @@ export default function Page() {
       )}
 
       {/* FORM */}
-      {view === "form" && (
+      {view==="form" && (
         <div className="bg-white p-4 rounded-xl shadow space-y-3">
-          <input placeholder="Customer" value={customer} onChange={(e)=>setCustomer(e.target.value)} className="w-full p-2 border"/>
-          <input placeholder="Title" value={title} onChange={(e)=>setTitle(e.target.value)} className="w-full p-2 border"/>
-          <input placeholder="Location" value={location} onChange={(e)=>setLocation(e.target.value)} className="w-full p-2 border"/>
 
-          <input
-            type="date"
-            value={dueDate}
+          {["Customer", "Title", "Location"].map((label, i)=>(
+            <input
+              key={i}
+              placeholder={label}
+              value={i===0?customer:i===1?title:location}
+              onChange={(e)=>
+                i===0?setCustomer(e.target.value):
+                i===1?setTitle(e.target.value):
+                setLocation(e.target.value)}
+              className="w-full p-3 border border-gray-500 rounded text-black"
+            />
+          ))}
+
+          <input type="date" value={dueDate}
             onChange={(e)=>setDueDate(e.target.value)}
-            className="w-full p-2 border"
-          />
+            className="w-full p-3 border border-gray-500 rounded text-black" />
 
-          <select value={status} onChange={(e)=>setStatus(e.target.value)} className="w-full p-2 border">
+          <select value={status}
+            onChange={(e)=>setStatus(e.target.value)}
+            className="w-full p-3 border border-gray-500 rounded text-black">
             <option>Pass</option>
             <option>Fail</option>
             <option>Repair</option>
           </select>
 
-          <textarea placeholder="Notes" value={notes} onChange={(e)=>setNotes(e.target.value)} className="w-full p-2 border"/>
+          <textarea placeholder="Notes"
+            value={notes}
+            onChange={(e)=>setNotes(e.target.value)}
+            className="w-full p-3 border border-gray-500 rounded text-black"/>
 
           <input type="file" multiple onChange={(e)=>setPhotos(Array.from(e.target.files||[]))}/>
 
-          <button onClick={handleSave} className="bg-green-600 text-white p-3 w-full">
+          <button onClick={handleSave} className="bg-green-600 text-white p-3 w-full rounded font-bold">
             Save Inspection
           </button>
+
         </div>
       )}
 
@@ -209,14 +222,17 @@ export default function Page() {
         <div className="bg-white p-4 rounded-xl shadow space-y-2">
           <button onClick={()=>setSelectedInspection(null)}>← Back</button>
 
-          <h2>{selectedInspection.title}</h2>
+          <h2 className="text-xl font-bold">{selectedInspection.title}</h2>
           <p>{selectedInspection.customer}</p>
           <p>{selectedInspection.location}</p>
           <p>{selectedInspection.notes}</p>
-          <p>Due: {selectedInspection.due_date}</p>
+
+          {selectedInspection.due_date && (
+            <p className="font-bold">{getDueStatus(selectedInspection.due_date)}</p>
+          )}
 
           {selectedInspection.photos?.map((p:any,i:number)=>(
-            <img key={i} src={p} onClick={()=>setSelectedPhoto(p)} />
+            <img key={i} src={p} onClick={()=>setSelectedPhoto(p)} className="rounded" />
           ))}
         </div>
       )}
@@ -224,25 +240,23 @@ export default function Page() {
       {/* LIST */}
       {!selectedInspection && view==="list" && (
         <div className="space-y-3">
-          {displayed.map((insp:any)=>(
-            <div
-              key={insp.id}
+          {filtered.map((insp:any)=>(
+            <div key={insp.id}
               onClick={()=>setSelectedInspection(insp)}
-              className="bg-white p-4 rounded-xl shadow cursor-pointer"
-            >
+              className="bg-white p-4 rounded-xl shadow cursor-pointer">
+
               <div className="flex justify-between">
-                <b>{insp.title}</b>
+                <b className="text-black text-lg">{insp.title}</b>
                 <span>
-                  {insp.status === "Pass" ? "✅" :
-                   insp.status === "Fail" ? "❌" : "🔧"}
+                  {insp.status==="Pass"?"✅":insp.status==="Fail"?"❌":"🔧"}
                 </span>
               </div>
 
-              <p className="text-sm">{insp.customer}</p>
-              <p className="text-sm text-gray-500">{insp.location}</p>
+              <p className="text-black font-medium">{insp.customer}</p>
+              <p className="text-gray-700">{insp.location}</p>
 
               {insp.due_date && (
-                <p className="text-xs text-gray-500">
+                <p className="text-red-600 font-bold">
                   {getDueStatus(insp.due_date)}
                 </p>
               )}
@@ -251,9 +265,10 @@ export default function Page() {
         </div>
       )}
 
-      {/* FULLSCREEN PHOTO */}
+      {/* PHOTO FULLSCREEN */}
       {selectedPhoto && (
-        <div onClick={()=>setSelectedPhoto(null)} className="fixed inset-0 bg-black flex items-center justify-center">
+        <div onClick={()=>setSelectedPhoto(null)}
+          className="fixed inset-0 bg-black flex items-center justify-center">
           <img src={selectedPhoto} className="max-w-full max-h-full"/>
         </div>
       )}
