@@ -17,6 +17,7 @@ export default function Page() {
   const [status, setStatus] = useState("Pass");
   const [photos, setPhotos] = useState<any[]>([]);
   const [view, setView] = useState("list");
+  const [selectedInspection, setSelectedInspection] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -108,10 +109,13 @@ export default function Page() {
   return (
     <div className="p-3 max-w-md mx-auto space-y-4">
 
-      {/* TOP NAV */}
+      {/* NAV */}
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => setView("list")}
+          onClick={() => {
+            setView("list");
+            setSelectedInspection(null);
+          }}
           className={`p-2 w-1/2 ${view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
           Inspections
@@ -189,13 +193,41 @@ export default function Page() {
         </div>
       )}
 
+      {/* DETAIL VIEW */}
+      {view === "list" && selectedInspection && (
+        <div className="bg-white p-4 rounded-xl shadow space-y-2">
+
+          <button
+            onClick={() => setSelectedInspection(null)}
+            className="text-blue-500"
+          >
+            ← Back
+          </button>
+
+          <h2 className="text-xl font-bold">{selectedInspection.title}</h2>
+          <p>{selectedInspection.customer}</p>
+          <p>{selectedInspection.location}</p>
+          <p>{selectedInspection.notes}</p>
+
+          <div className="space-y-2">
+            {selectedInspection.photos?.map((p: any, i: number) => (
+              <img key={i} src={p} className="rounded" />
+            ))}
+          </div>
+
+        </div>
+      )}
+
       {/* LIST */}
-      {view === "list" && (
+      {view === "list" && !selectedInspection && (
         <div className="space-y-3">
 
           {inspections.map((insp: any) => (
-            <div key={insp.id} className="bg-white p-4 rounded-xl shadow">
-
+            <div
+              key={insp.id}
+              onClick={() => setSelectedInspection(insp)}
+              className="bg-white p-4 rounded-xl shadow cursor-pointer"
+            >
               <div className="flex justify-between items-center">
                 <b className="text-lg">{insp.title}</b>
                 <span className="text-xl">
@@ -213,7 +245,6 @@ export default function Page() {
               {insp.photos?.[0] && (
                 <img src={insp.photos[0]} className="rounded mt-2" />
               )}
-
             </div>
           ))}
 
