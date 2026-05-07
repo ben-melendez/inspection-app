@@ -47,7 +47,7 @@ export default function Page() {
     if (user) loadInspections();
   }, [user]);
 
-  const uploadPhotos = async (files) => {
+  const uploadPhotos = async (files: any[]) => {
     const urls = [];
 
     for (let file of files) {
