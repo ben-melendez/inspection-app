@@ -16,7 +16,7 @@ export default function Page() {
   const [customer, setCustomer] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Pass");
-  const [photos, setPhotos] = useState([]);
+  const [photos, setPhotos] = useState,<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
