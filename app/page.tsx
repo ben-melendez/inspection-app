@@ -5,7 +5,6 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-``
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Page() {
@@ -17,6 +16,7 @@ export default function Page() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Pass");
   const [photos, setPhotos] = useState<any[]>([]);
+  const [view, setView] = useState("list");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -91,6 +91,7 @@ export default function Page() {
     setPhotos([]);
 
     loadInspections();
+    setView("list");
   };
 
   if (!user) {
@@ -106,78 +107,119 @@ export default function Page() {
 
   return (
     <div className="p-3 max-w-md mx-auto space-y-4">
+
+      {/* TOP NAV */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setView("list")}
+          className={`p-2 w-1/2 ${view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          Inspections
+        </button>
+
+        <button
+          onClick={() => setView("form")}
+          className={`p-2 w-1/2 ${view === "form" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+        >
+          New Inspection
+        </button>
+      </div>
+
+      {/* HEADER */}
       <div className="flex justify-between">
         <h2 className="font-bold text-lg">Inspections</h2>
         <button onClick={logout}>Logout</button>
       </div>
 
-      <div className="bg-white p-3 rounded-xl space-y-2 shadow">
-        <input
-          placeholder="Customer"
-          value={customer}
-          onChange={(e) => setCustomer(e.target.value)}
-          className="w-full p-2 border"
-        />
+      {/* FORM */}
+      {view === "form" && (
+        <div className="bg-white p-3 rounded-xl space-y-2 shadow">
 
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border"
-        />
+          <input
+            placeholder="Customer"
+            value={customer}
+            onChange={(e) => setCustomer(e.target.value)}
+            className="w-full p-2 border"
+          />
 
-        <input
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full p-2 border"
-        />
+          <input
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full p-2 border"
+          />
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-2 border"
-        >
-          <option>Pass</option>
-          <option>Fail</option>
-          <option>Repair</option>
-        </select>
+          <input
+            placeholder="Location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="w-full p-2 border"
+          />
 
-        <textarea
-          placeholder="Notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="w-full p-2 border"
-        />
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full p-2 border"
+          >
+            <option>Pass</option>
+            <option>Fail</option>
+            <option>Repair</option>
+          </select>
 
-        <input
-          type="file"
-          multiple
-          onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-        />
+          <textarea
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full p-2 border"
+          />
 
-        <button
-          onClick={handleSave}
-          className="bg-green-500 text-white p-3 w-full"
-        >
-          Save Inspection
-        </button>
-      </div>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setPhotos(Array.from(e.target.files || []))}
+          />
 
-      {inspections.map((insp) => (
-        <div key={insp.id} className="bg-white p-3 rounded-xl shadow">
-          <b>{insp.title}</b>
-          <p>{insp.customer}</p>
-          <p>{insp.location}</p>
-          <p>{insp.notes}</p>
+          <button
+            onClick={handleSave}
+            className="bg-green-500 text-white p-3 w-full"
+          >
+            Save Inspection
+          </button>
 
-          <div className="grid grid-cols-3 gap-1">
-            {insp.photos?.map((p: any, i: number) => (
-              <img key={i} src={p} className="rounded" />
-            ))}
-          </div>
         </div>
-      ))}
+      )}
+
+      {/* LIST */}
+      {view === "list" && (
+        <div className="space-y-3">
+
+          {inspections.map((insp: any) => (
+            <div key={insp.id} className="bg-white p-4 rounded-xl shadow">
+
+              <div className="flex justify-between items-center">
+                <b className="text-lg">{insp.title}</b>
+                <span className="text-xl">
+                  {insp.status === "Pass"
+                    ? "✅"
+                    : insp.status === "Fail"
+                    ? "❌"
+                    : "🔧"}
+                </span>
+              </div>
+
+              <p className="text-sm text-gray-600">{insp.customer}</p>
+              <p className="text-sm text-gray-500">{insp.location}</p>
+
+              {insp.photos?.[0] && (
+                <img src={insp.photos[0]} className="rounded mt-2" />
+              )}
+
+            </div>
+          ))}
+
+        </div>
+      )}
+
     </div>
   );
 }
